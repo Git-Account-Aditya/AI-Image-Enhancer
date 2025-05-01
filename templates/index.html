@@ -1,0 +1,333 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="hero-title mb-3">AI Image Enhancement</h1>
+                <p class="hero-subtitle lead mb-4">
+                    Transform your photos with AI-powered enhancement and get intelligent captions
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="#upload-section" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Enhance Image
+                    </a>
+                    <a href="#how-it-works" class="btn btn-outline-light">
+                        <i class="fas fa-info-circle me-2"></i>How It Works
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Upload Section -->
+<section id="upload-section" class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card bg-dark shadow-sm">
+                    <div class="card-header bg-dark">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-magic me-2"></i>Enhance Your Image
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Error Alert -->
+                        <div id="error-alert" class="alert alert-danger d-none" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="error-message"></span>
+                        </div>
+
+                        <!-- Upload Form -->
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <!-- Drop Area -->
+                            <div id="drop-area" onclick="document.getElementById('file-input').click()">
+                                <div class="mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-secondary mb-3"></i>
+                                    <h5>Drag & Drop or Click to Upload</h5>
+                                    <p class="text-muted small">Supports JPG, PNG, JPEG, and GIF formats</p>
+                                    <input type="file" id="file-input" name="file" accept="image/*" class="d-none">
+                                </div>
+                            </div>
+
+                            <!-- File Preview -->
+                            <div id="file-preview" class="text-center mt-3 d-none"></div>
+                            <p id="file-name" class="text-center text-muted small mt-2 d-none"></p>
+
+                            <!-- Image Editing Tools -->
+                            <div id="editing-tools-container" class="d-none">
+                                <h6 class="mb-2">Image Editing Tools:</h6>
+                                <div class="editing-tools">
+                                    <button type="button" class="editing-tool" id="rotate-left-btn">
+                                        <i class="fas fa-undo"></i> Rotate Left
+                                    </button>
+                                    <button type="button" class="editing-tool" id="rotate-right-btn">
+                                        <i class="fas fa-redo"></i> Rotate Right
+                                    </button>
+                                    <button type="button" class="editing-tool" id="reset-edit-btn">
+                                        <i class="fas fa-sync"></i> Reset
+                                    </button>
+                                </div>
+
+                                <!-- Hidden fields to store edit info -->
+                                <input type="hidden" id="rotation-degrees" name="rotation" value="0">
+                                <input type="hidden" id="crop-data" name="crop_data" value="">
+                                <input type="hidden" id="current-edit-image" name="current_image" value="">
+                            </div>
+
+                            <!-- Caption Options -->
+                            <div class="form-group mb-4 mt-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="generate-caption-toggle" name="generate_caption" value="false">
+                                    <label class="form-check-label" for="generate-caption-toggle">
+                                        <i class="fas fa-comment-alt me-2"></i>Generate caption automatically
+                                    </label>
+                                </div>
+                                <div class="form-text">Generate an AI caption after enhancing the image</div>
+                            </div>
+
+                            <!-- Tone Selection -->
+                            <div class="form-group mb-4" id="tone-container">
+                                <label for="tone-select" class="form-label">
+                                    <i class="fas fa-sliders-h me-2"></i>Caption Tone:
+                                </label>
+                                <select class="form-select" id="tone-select" name="tone">
+                                    <option value="friendly" selected>Friendly</option>
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="enthusiastic">Enthusiastic</option>
+                                    <option value="thoughtful">Thoughtful</option>
+                                    <option value="humorous">Humorous</option>
+                                </select>
+                                <div class="form-text">Select the tone for the AI-generated caption</div>
+                            </div>
+
+                            <!-- Filter Selection -->
+                            <div class="form-group mb-4">
+                                <label for="filter-select" class="form-label">
+                                    <i class="fas fa-photo-film me-2"></i>Apply Filter:
+                                </label>
+                                <select class="form-select" id="filter-select" name="filter">
+                                    {% for filter_key, filter_info in filters.items() %}
+                                    <option value="{{ filter_key }}" {% if filter_key == 'none' %}selected{% endif %}>{{ filter_info.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text" id="filter-description">Choose a filter to apply to the enhanced image</div>
+                            </div>
+
+                            <!-- Filter Intensity -->
+                            <div class="form-group mb-4 d-none" id="intensity-container">
+                                <label for="filter-intensity" class="form-label">
+                                    <i class="fas fa-sliders-h me-2"></i>Filter Intensity: <span id="intensity-value">1.0</span>
+                                </label>
+                                <input type="range" class="form-range" id="filter-intensity" name="filter_intensity"
+                                       min="0.1" max="2.0" step="0.1" value="1.0">
+                                <div class="form-text">Adjust the intensity of the selected filter</div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" id="upload-button" class="btn btn-primary" disabled>
+                                    <i class="fas fa-magic me-2"></i>Enhance Image
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Loading Spinner -->
+                        <div id="loading-spinner" class="spinner-overlay mt-4 d-none">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-3">Processing your image...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Results Section -->
+<section id="results-section" class="py-5 d-none fade-in">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card bg-dark shadow-sm">
+                    <div class="card-header bg-dark">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2 text-success"></i>Enhancement Results
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Original Image -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Original Image</h5>
+                                    </div>
+                                    <div class="result-image-container">
+                                        <img id="original-image" class="result-image" src="" alt="Original Image">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Image -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Enhanced Image</h5>
+                                    </div>
+                                    <div class="result-image-container">
+                                        <img id="enhanced-image" class="result-image" src="" alt="Enhanced Image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Caption Card -->
+                        <div class="row mt-4">
+                            <div class="col-md-8">
+                                <div class="card caption-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-comment-alt me-2"></i>AI-Generated Caption
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="image-caption" class="lead mb-0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>Image Details
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <strong><i class="fas fa-photo-film me-2"></i>Applied Filter:</strong>
+                                            <p id="applied-filter" class="mb-0 text-primary">No Filter</p>
+                                            <p id="filter-detail" class="small text-muted mt-1"></p>
+                                        </div>
+                                        <div class="mb-0">
+                                            <strong><i class="fas fa-sliders-h me-2"></i>Processing:</strong>
+                                            <ul class="mb-0 ps-3">
+                                                <li>AI Enhancement</li>
+                                                <li>Intelligent Captioning</li>
+                                                <li>Resolution Improvement</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+
+                            <button id="generate-caption-btn" class="btn btn-primary">
+                                <i class="fas fa-comment-alt me-2"></i>Generate New Caption
+                            </button>
+                            <a href="#" id="download-button" class="btn btn-success" download="enhanced_image.jpg">
+                                <i class="fas fa-download me-2"></i>Download Enhanced Image
+                            </a>
+                            <button id="reset-button" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Process Another Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-5 bg-dark">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center mb-5">
+                <h2>How It Works</h2>
+                <p class="lead text-muted">Our AI-powered image enhancement system uses state-of-the-art technology</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-upload fa-3x text-primary"></i>
+                        </div>
+                        <h4>1. Upload</h4>
+                        <p class="text-muted">Upload any image you want to enhance. We support all common image formats.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-wand-magic-sparkles fa-3x text-primary"></i>
+                        </div>
+                        <h4>2. Enhance</h4>
+                        <p class="text-muted">Our AI model upscales and enhances your image using Real-ESRGAN technology.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-comment-dots fa-3x text-primary"></i>
+                        </div>
+                        <h4>3. Caption</h4>
+                        <p class="text-muted">The enhanced image is analyzed by an AI to generate a detailed caption.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-8 mx-auto text-center">
+                <p class="text-muted">
+                    We use ONNX Runtime for image enhancement with the Real-ESRGAN model and Ollama LLM (llava) for intelligent captioning. All processing happens on the server and your images are not stored permanently.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Crop Modal Overlay -->
+<div id="crop-overlay" class="crop-overlay d-none">
+    <div class="crop-container">
+        <h4 class="mb-3">
+            <i class="fas fa-crop-alt me-2"></i>Crop Image
+        </h4>
+        <div class="crop-image-container">
+            <img id="crop-image" class="crop-image" src="" alt="Image to crop">
+            <div id="crop-grid" class="crop-grid"></div>
+            <div id="crop-selection" class="crop-selection d-none"></div>
+            <div id="crop-info" class="crop-info"></div>
+        </div>
+        <div class="crop-controls">
+            <button id="crop-cancel" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-2"></i>Cancel
+            </button>
+            <button id="crop-apply" class="btn btn-primary">
+                <i class="fas fa-check me-2"></i>Apply Crop
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
